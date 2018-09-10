@@ -1,0 +1,378 @@
+---
+title: "Armenian Job Market"
+author: "David Gadyan"
+date: "September 10, 2018"
+output: pdf_document
+---
+
+ As a matter of fact with the rise of technological era, old methods of job advertisement such as newspapers, leaflets and other paper based means of communication step down to more advanced and sophisticated technological tools such as online job postin websites, employment agencies using advanced technological tools etc. In this abundance of choices and ever simplifying methods of posting jobs online, more and more companies turn to online job posting websites. This leads to the situation when data on the Web becomes more and more representative of real economical demand for jobs. This in turn reveals new prospects to analyze job market patters applying state-of-the-art programmes and methods to get data from Web and analyze it. This presents great opportunities for automatization and optimization  as we can data  online by no means and conduct analysis in very short period of time even automizing code to extend that we may one day open a website or a dashboard and see all useful info without any hard codeing and etc.Nevertheless, in this analysis we did not have goal to automate it to that extend but in near future in my view this will be also done.
+
+Our analysis will be centered around Armenian Job Market and particularly IT sector for the period from 2005 to 2018 years. At the time of conducting this analysis 2018 has not finished yet and 
+2018's data represents months from January to August.
+
+
+```{r}
+
+library(tidyverse)
+library(wordcloud)
+library(tm)
+library(dplyr)
+library(formattable)
+```
+
+ The data was manually scrapped from the following website.**[link.](https://groups.yahoo.com/neo/groups/careercenter-am/info)** 
+ 
+```{r}
+
+jobs_2005_2018<-read.csv('C:\\Users\\Gaya\\Desktop\\R\\Workings\\Armenian Job Market\\df_final5.csv',stringsAsFactors = F)
+jobs_2005_2018[,1]<-NULL
+jobs_2005_2018$opening_date<-as.Date(jobs_2005_2018$opening_date,'%Y-%m-%d')
+jobs_2005_2018$application_deadline_date<-as.Date(jobs_2005_2018$application_deadline_date,'%Y-%m-%d')
+
+```
+
+Let's look at the structure of our dataframe which was scraped manually from one an Armenian online job posting website. As we see there are 24,288 observations with 11 variables.
+ 
+```{r}
+str(jobs_2005_2018)
+```
+
+```{r}
+head(jobs_2005_2018)
+```
+
+As we may observe we have two date type variables opening_date and application_deadline_date let's 
+analyze them to get Average Hiring Duration to compare it with other countries' results. To do this we need to separate 2017 year data.
+
+```{r}
+
+jobs_2017<-jobs_2005_2018%>%
+  mutate(Year=format(jobs_2005_2018$opening_date,'%Y'))%>%
+  filter(Year %in% c(2017))
+
+```
+
+To get the Average Hiring Duration in Armenia during 2017 we extract opening_date from application_deadline_date and take the mean.
+
+```{r}
+av_time_open_deadline_final<-mean(jobs_2017$application_deadline_date-jobs_2017$opening_date)
+av_time_open_deadline_final
+
+```
+
+The Average Hiring Duration in Armenia during 2017 was 23.6 days. Now let's compare it with worlwide result published by **glassdoor** which is highly respected company in the Job Market.
+According to **glassdoor** the average length of job interview processes in 2017 was 23.7 days across all 25 countries in their sample. You can find this study through the following link **[link.](https://www.glassdoor.com/research/time-to-hire-in-25-countries/)**
+As we may observe Armenia's Average Hiring Duration is practically the same as global average,
+which is a good result.
+
+Now let's explore the proportion of jobs in each industry.
+```{r}
+jobs_2005_2018%>%
+  group_by(format(jobs_2005_2018$opening_date,'%Y'))%>%
+  summarise(count=n())%>%
+  filter(`format(jobs_2005_2018$opening_date, "%Y")`>2004)%>%
+ggplot(aes(x=`format(jobs_2005_2018$opening_date, "%Y")`,y=count))+geom_bar(stat = 'identity')+
+  labs(title='Chart1.Historical Job Posting in Armenia 2005-2018*',x='Year',y='Number of job postings')+
+  theme(axis.text.x = element_text(angle=45))
+
+
+```
+
+
+As we may easily observe the online job openings had doubled from 2005 to 2017. The number of postings peacked in 2017. Nevertheless, in 2018 the number of job openings was lower compared to 2017. We will look closer to this situation because we cannot conclude conlusively looking only on the above barplot Chart1. The primary reason for the previous statement is that 2018 year does not include full year data as year did not ended at the time of this analysis.
+
+```{r}
+max(jobs_2005_2018$opening_date)
+```
+
+As we can observe the latest date is 2018-08-31. So we will visualize in our next graph 2017 and 2018 from years start and until this date.
+
+```{r}
+
+jobs_2005_2018%>%
+  mutate(Year=format(jobs_2005_2018$opening_date,'%Y'),Month=format(jobs_2005_2018$opening_date,'%B'))%>%
+  filter(Year %in% c(2017,2018))%>%
+  group_by(Year,Month)%>%
+  summarise(count=n())%>%
+  arrange(match(Month, month.name))%>%
+  ggplot(aes(x=factor(Month, levels = month.name),y=count,fill=Year))+geom_bar(stat = 'identity')+
+  labs(title='Chart2. Job Posting in Armenia 2017-2018*',x='Month',y='Number of job postings')+
+  theme(axis.text.x = element_text(angle=45))+facet_grid(Year~.)
+
+```
+
+As we stated previously 2018 year does not represent full year. It only includes period from January to August.Despite this we may observe some decline in the number of job postings in 2018 compared to 2017, particularly in April and August. Let's further discover this two years.
+
+```{r}
+jobs_2005_2018%>%
+  mutate(Year=format(jobs_2005_2018$opening_date,'%Y'),Month=format(jobs_2005_2018$opening_date,'%B'))%>%
+  filter(Year %in% c(2017,2018))%>%
+  group_by(Year,Month)%>%
+  summarise(count=n())%>%
+  arrange(match(Month, month.name))%>%
+  ggplot(aes(x=factor(Month, levels = month.name),y=count,fill=Year))+geom_bar(stat = 'identity',position ='dodge')+
+  labs(title='Chart3. Job Posting in Armenia 2017-2018*',x='Month',y='Number of job postings')+
+  theme(axis.text.x = element_text(angle=45))
+
+```
+
+The above graph puts side by side 2017 and 2018 years and makes comparison between them easier.
+Chart3 supported our preliminary observation during the June, July and August number of online job postings reduced despite the fact thet in 2018's first two months clearly dominated over the same period.
+
+Now let's explore by industry and year.
+
+```{r}
+colnames(jobs_2005_2018)
+```
+
+```{r}
+jobs_2005_2018%>%
+  mutate(Year=format(jobs_2005_2018$opening_date,'%Y'),Month=format(jobs_2005_2018$opening_date,'%B'))%>%
+  filter(Year %in% c(2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018))%>%
+  group_by(Year,Month,industry)%>%
+  summarise(count=n())%>%
+  arrange(match(Month, month.name))%>%
+  ggplot(aes(x=Year,y=count,fill=industry))+geom_bar(stat = 'identity')+
+  labs(title='Chart4. Job Posting in Armenia by Industry 2015-2018*',x='Year',y='Number of job postings')+
+  theme(axis.text.x = element_text(angle=45))+facet_wrap(industry~.)
+```
+
+As we may easily observe the biggest proportion in our dataset takes Information Technology industry or job category other way around. This is very interesting pattern in our online job postings dataset and we will conduct deeper analysis especially into this job sector further in our analysis.
+
+```{r}
+jobs_2005_2018%>%
+  mutate(Year=format(jobs_2005_2018$opening_date,'%Y'),Month=format(jobs_2005_2018$opening_date,'%B'))%>%
+  filter(Year %in% c(2014,2015,2016,2017,2018))%>%
+  group_by(Year,Month,industry)%>%
+  summarise(count=n())%>%
+  arrange(match(Month, month.name))%>%
+  filter(Month %in% c("January","February","March","April","May","June","July","August" ))%>%
+  ggplot(aes(x=Year,y=count,fill=factor(Month, levels = month.name)))+geom_bar(stat = 'identity')+
+  labs(title='Chart5. Job Posting in Armenia by Industry 2014-2018 from January-August*',x='Year',y='Number of job postings')+
+  theme(axis.text.x = element_text(angle=45))+guides(fill=guide_legend(title="Months"))
+```
+
+The Chart5 perfectly presents situationin terms of whether 2018 was lower in the number of job
+postings. As we stated before 2018 year data was not a full as it included months from January-August.It is obvious that in 2018 in first 8 months there was any decline and in the number of online job postings and results at comparabale periods are pretty similar even with 2018 in January and February clealry leading in the number of jobs. Nevertheless this results stalled in March and especially in April. The timing follows the Armenian Velvet Revolution which had taken place during April and clearly people and businesses we generally consumed by political activities rather than mere business market.
+
+
+```{r}
+jobs_2005_2018%>%
+  mutate(Year=format(jobs_2005_2018$opening_date,'%Y'))%>%
+  filter(Year %in% c(2018))%>%
+  group_by(Year,industry)%>%
+  summarise(count=n())%>%
+  mutate(per=count/sum(count)) %>% 
+  arrange(desc(per))%>%
+  ggplot(aes(x='',y=per,fill=industry))+geom_bar(width = 1, size = 1, color = "white", stat='identity')+
+  coord_polar("y", start=0)+geom_text(aes(label = percent(per)),position = position_stack(vjust = 0.5))+
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Chart6. Jobs by categories 2018") +
+  guides(fill = guide_legend(reverse = TRUE)) +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        plot.title = element_text(hjust = 0.5, color = "#666666"))
+```
+
+
+As we clealry observe the IT industry represents the biggest proportion of all online job postings.The second in the number of job postings is Management category. Let's observe whether the same holds true in 2017 year.
+
+```{r}
+jobs_2005_2018%>%
+  mutate(Year=format(jobs_2005_2018$opening_date,'%Y'))%>%
+  filter(Year %in% c(2017))%>%
+  group_by(Year,industry)%>%
+  summarise(count=n())%>%
+  mutate(per=count/sum(count)) %>% 
+  arrange(desc(per))%>%
+  ggplot(aes(x='',y=per,fill=industry))+geom_bar(width = 1, size = 1, color = "white", stat='identity')+
+  coord_polar("y", start=0)+geom_text(aes(label = percent(per)),position = position_stack(vjust = 0.5))+
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Chart7. Jobs by categories 2017") +
+  guides(fill = guide_legend(reverse = TRUE)) +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        plot.title = element_text(hjust = 0.5, color = "#666666"))
+```
+
+As we see in 2017 the proprtion of IT was even higher around 43.87% compared to 2018 39.45% i.e fall by approximatelly 4.4%. Now let's define what job title comprises IT industry in order to define the most demanded IT job in Armenia.
+
+```{r}
+it_titles_2017<-jobs_2005_2018%>%
+  mutate(Year=format(jobs_2005_2018$opening_date,'%Y'))%>%
+  filter(Year %in% c(2017)&industry %in% c('Information Technology'))%>%
+  group_by(title)%>%
+  summarise(count=n())%>%
+  mutate(per=count/sum(count)) %>% 
+  arrange(desc(per))
+
+it_titles_2017<-data.frame(it_titles_2017)
+
+it_titles_2017[it_titles_2017$count>3,]
+
+```
+From this list we may see that Web Developer, .NET Developer amd Digital Marketing Specialists form respectivelly the first three positions in the list. Howevere, only looking on this table will not reveal significant insights and as it is known better way is visualization. As saying goes 'it is better one time show than 100 say'.
+
+```{r}
+it_titles_2018<-jobs_2005_2018%>%
+  mutate(Year=format(jobs_2005_2018$opening_date,'%Y'))%>%
+  filter(Year %in% c(2018)&industry %in% c('Information Technology'))%>%
+  group_by(title)%>%
+  summarise(count=n())%>%
+  mutate(per=count/sum(count)) %>% 
+  arrange(desc(per))
+
+it_titles_2018<-data.frame(it_titles_2018)
+
+
+it_titles_2018[it_titles_2018$count>3,]
+```
+
+
+```{r}
+set.seed(42)
+wordcloud(words = it_titles_2018$title,freq = it_titles_2018$count,min.freq = 3,scale=c(1.8,0.1),random.order = F,
+          colors=brewer.pal(8,'Dark2'))
+```
+
+The wordcloud above presents IT jobs demanded the most in 2018 year by the employers.
+We see that Database Developers, System Administrators, Android Developers, Full Stack Developers
+are highly by demanded by Armenian Job Market in 2018 year. We may gain other useful results from the wordcloud above but we leave it to the subjective analysis and needs of the user of this project.
+
+In the following steps we define a function to make our analysis of Most Demanded IT Jobs on a yearly basis.
+
+```{r}
+it_wordcloud_f<-function(year=2018,min_freq=5){
+it_title<-jobs_2005_2018%>%
+  mutate(Year=format(jobs_2005_2018$opening_date,'%Y'))%>%
+  filter(Year %in% c(year)&industry %in% c('Information Technology'))%>%
+  group_by(title)%>%
+  summarise(count=n())%>%
+  mutate(per=count/sum(count)) %>% 
+  arrange(desc(per))
+layout(matrix(c(1, 2), nrow=2), heights=c(30, 100))
+par(mar=rep(1, 4))
+plot.new()
+text(x=0.5, y=0.5, labels = paste("Most popular IT jobs in ",year))
+w<-wordcloud(words = it_title$title,freq = it_title$count,min.freq = min_freq,scale=c(1.1,0.1),random.order = F,
+          colors=brewer.pal(8,'Dark2'),main='Title')
+}
+
+```
+
+```{r}
+it_wordcloud_f(2018)
+
+```
+
+```{r}
+for (i in 2005:2018){
+  it_wordcloud_f(i)
+}
+```
+
+The above wordclouds generates the most popular jobs in a given year. Interestingly if we will 
+not set a seed it will generate random wordclouds meaning each time runnig code we will get different wordclouds. 
+Next we will analyze the required_qualifications variable which represents the qualification and skills demanded by employee particularly in IT sector but code may easily be extended to other industries.
+First we analyze the whole dataset including all years from 2005 to 2018 then we may also conduct yearly analysis.
+
+```{r}
+it_title_05_18<-jobs_2005_2018[jobs_2005_2018$industry=='Information Technology',]
+
+it_title_05_18_vs<-VectorSource(it_title_05_18$required_qualifications)
+
+it_title_05_18_corpus<-VCorpus(it_title_05_18_vs)
+
+it_title_05_18_dtm<-TermDocumentMatrix(it_title_05_18_corpus,control = list(removeNumbers=T,stopwords=T,stemming=F,removePunctuation=F))
+
+it_title_05_18_dtm
+
+inspect(it_title_05_18_dtm)
+```
+
+
+```{r}
+dtm_mat<-as.matrix(it_title_05_18_dtm)
+
+freqs<-rowSums(dtm_mat)
+
+df_freq<-data.frame(terms=rownames(dtm_mat),
+                     freq=freqs,stringsAsFactors = F)
+
+df_freq<-df_freq[order(df_freq$freq,decreasing = T),]
+
+head(df_freq,n=40)
+```
+
+
+
+```{r}
+set.seed(42)
+wordcloud(words = df_freq$terms,freq = df_freq$freq,min.freq = 20,max.words=500,random.order = F,
+          scale=c(2.5,0.3),colors=brewer.pal(10,'Spectral'))
+```
+
+The above wordcloud as stated before represents the most used words in required_qualifications variable and employees looking on this may understand what their potential employres expect from them.Ultimatelly we can see that general words and dominating in the wordcloud but despite of that we can identify also some useful info. Despite the fact that wordcloud always generate random plots practically all of them bring the following interesting for us words:"degree",sql","ios","html","git" etc.
+
+```{r}
+head(df_freq,n=50)
+```
+
+As we see also from above table general words extremelly contaminate the results and don't allow us to see the technical skills needed which are demanded more in IT sector. That why in the following steps we will develop algorithm which will detect useful for analysis technical patterns such as a programming language and other technical skills to have clearer vision of the market and really insightfull results.
+
+```{r}
+str(jobs_2005_2018)
+```
+```{r}
+programming_skills<-list('HTML','CSS','R','PYTHON','C','C++','C#' ,'.NET','JAVASCRIPT','JAVA','SQL','MYSQL','SQL SERVER','PHP','JSP','ASP','UNIX','ORACLE','XML','XSLT','OOP','OOD','DHMTL','FLASH','APACHE','ASP.NET','LINUX','APACHE','MS ACESS','WINDOWS')
+
+skills_v<-c('HTML','CSS','\\s+R{1}\\s+','PYTHON','C\\+{1,2}','C\\#' ,'\\.NET','VISUALBASIC\\.NET','JQUERY','AGILE','ASP\\.NET','JAVASCRIPT','JAVA','SQL','MYSQL','SQL SERVER','PHP','JSP','ASP','UNIX','ORACLE','XML','XSLT','\\s+OOP\\s+','\\s+OOD\\s+','DHMTL','FLASH','APACHE','ASP.NET','LINUX','APACHE','MS ACESS','WINDOWS')
+
+```
+
+Here we develop function to do wordclouding for required_qualifications variable to define the most demanded skils in IT on a yealry basis.
+```{r}
+
+skills_f<-function(year=2018){
+  it_df<-jobs_2005_2018%>%
+    mutate(Year=format(jobs_2005_2018$opening_date,'%Y'))%>%
+    filter(Year %in% c(year)&industry %in% c('Information Technology'))
+  
+  skills_v<-c('HTML','CSS','\\s+R{1}\\s+','PYTHON','C\\+{1,2}','C\\#' ,'GIT|GITHUB','\\.NET','VISUALBASIC\\.NET','JQUERY','AGILE','ASP\\.NET','JAVASCRIPT','JAVA','SQL','MYSQL','SQL SERVER','PHP','JSP','ASP','UNIX','ORACLE','XML','XSLT','\\s+OOP\\s+','\\s+OOD\\s+','DHMTL','FLASH','APACHE','ASP.NET','LINUX','APACHE','MS ACESS','WINDOWS')
+
+  skills_l<-str_extract_all(toupper(it_df$required_qualifications),pattern =paste(skills_v,collapse = '|') )
+  skills_l<-na.omit(unlist(skills_l))
+  skills_l<-data.frame(skills_l)
+  
+  skills_df<-skills_l%>%
+    group_by(skills_l)%>%
+    summarise(count=n())%>%
+    mutate(per=count/sum(count)) %>% 
+    arrange(desc(per))
+  
+  layout(matrix(c(1, 2), nrow=2), heights=c(1, 4))
+  par(mar=rep(0, 4))
+  plot.new()
+  text(x=0.5, y=0.5, labels = paste("Most demanded IT skils in ",year))
+  w<-wordcloud(words = skills_df$skills_l,freq = skills_df$count,min.freq = 50,scale=c(2.5,0.3),random.order = F,
+               colors=brewer.pal(8,'Dark2'),main='Title')
+}
+
+```
+
+```{r}
+for (i in 2005:2018){
+  skills_f(i)
+}
+```
+
+As we may clealry observe knowledge of SQL,HTML,JAVASCRIPT is highly demanded and apperars practically in all wordclouds. As a matter of fact based on the wordclouds as times goes by more robust skillset is being demanded by employer from the applicants. This is quite natural as technology is developing and business owners want to see smart workers with vast amount of differnet specifications as no one knows exactly how technology would develop in the next few years so when empooyees poses different skillset employers minimize the risks for their business. We may also observe that role of GIT also increase over time particularly in 2017-2018 years. As a matter of fact it hard to grasp all aspects of wordclouds and conclusions will be highly subjective depending on the user so we will overcomplicate the interpretaions based on the wordclouds and will leave it on the users of this analysis.
+
+To conclude, in our analysis we scraped data from an Armenina online job postings website for period from 2005 to 2018 year and conducted analysis aimed at identifying the patterns in Armenian job market. We looked at historical rates of online job postings and revealed that the number of online job postings significantly increased and the majority of them is in IT sector. We emphasized this job industry in our analysis but we may easily extend in to any predefined job category defined in our dataset. We revealed the most popular job titles i.e. professions in Armenia which are presented year by year using wordclouds. In addition, we discovered the programming languages or skills that are highly demanded by employers also on yearly basis
+from 2005 to 2018. Ultimatelly there is much more to discover in the data but for the purpose of this analysis we will not go further and may continue in the future projects.
+
+

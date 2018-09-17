@@ -2,7 +2,10 @@
 title: "Armenian Job Market"
 author: "David Gadyan"
 date: "September 10, 2018"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
  As a matter of fact with the rise of technological era, old methods of job advertisement such as newspapers, leaflets and other paper based means of communication step down to more advanced and sophisticated technological tools such as online job postin websites, employment agencies using advanced technological tools etc. In this abundance of choices and ever simplifying methods of posting jobs online, more and more companies turn to online job posting websites. This leads to the situation when data on the Web becomes more and more representative of real economical demand for jobs. This in turn reveals new prospects to analyze job market patters applying state-of-the-art programmes and methods to get data from Web and analyze it. This presents great opportunities for automatization and optimization  as we can data  online by no means and conduct analysis in very short period of time even automizing code to extend that we may one day open a website or a dashboard and see all useful info without any hard codeing and etc.Nevertheless, in this analysis we did not have goal to automate it to that extend but in near future in my view this will be also done.
@@ -128,6 +131,9 @@ Now let's explore by industry and year.
 ```{r tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 colnames(jobs_2005_2018)
 ```
+
+Let's create new data frame which will sort out the most demanded inductries in Armenia by the number pf online job postings and make vicualizations using this dataset to make communicate meaningfull messages.
+
 ```{r tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 jobs_2005_2018_s<-data.frame(jobs_2005_2018)
 jobs_2005_2018_s[jobs_2005_2018_s$industry %in% c("Construction","Customer Service","Design","Education & Teaching","General Labor","Health Care","Human Resources","Insurance","Journalism","Legal","Nonprofit & Social Services","Other","Real Estate","Telecommunications","Tourism"),]$industry<-'Other'

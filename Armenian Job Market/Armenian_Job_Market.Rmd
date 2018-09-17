@@ -132,7 +132,7 @@ Now let's explore by industry and year.
 colnames(jobs_2005_2018)
 ```
 
-Let's create new data frame which will sort out the most demanded inductries in Armenia by the number pf online job postings and make vicualizations using this dataset to make communicate meaningfull messages.
+Let's create new data frame which will sort out the most demanded industries in Armenia by the number pf online job postings and make vicualizations using this dataset to make communicate meaningfull messages.
 
 ```{r tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 jobs_2005_2018_s<-data.frame(jobs_2005_2018)

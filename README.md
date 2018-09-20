@@ -1,1 +1,1 @@
-### Projects are presented in R and Python.
+### Projects are presented in R and Python. Jupyter Notebooks are used to represent basic data analysis and visualization. Next these results are summarized in the form of interactive dashboards and websites. For R Markdown, Shiny packages were used to analyze and represent insights by pdf reports or interactive dashboards.
